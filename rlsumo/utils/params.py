@@ -4,14 +4,16 @@ from rlsumo.vehicle.controllers.controller import IDMControl, RLControl, Followe
 
 class VehicleParams:
 
-    def __init__(self, env_vehicles=21, rl_vehicles=1, max_velocity=30, initial_velocity=0, length=5, track_length=260):
+    def __init__(self, env_vehicles=21, rl_vehicles=1, max_velocity=30, initial_velocity=0, length=5, track_length=260,
+                 rl_action_type="discrete", agent_type="idm"):
         self.env_vehicles = env_vehicles
         self.rl_vehicles = rl_vehicles
         self.max_velocity = max_velocity
         self.initial_velocity = initial_velocity
         self.length = length
         self.track_length = track_length
-        self.vehicle_subs = [tc.VAR_FUELCONSUMPTION, tc.VAR_SPEED, tc.VAR_ROAD_ID, tc.VAR_ACCELERATION, tc.VAR_LANEPOSITION, tc.VAR_DISTANCE]
+        self.vehicle_subs = [tc.VAR_FUELCONSUMPTION, tc.VAR_SPEED, tc.VAR_ROAD_ID, tc.VAR_ACCELERATION,
+                             tc.VAR_LANEPOSITION, tc.VAR_DISTANCE]
         self.edge_len = track_length / 4.
         self.rts = {
             "top": ["top", "left", "bottom", "right"],
@@ -28,11 +30,13 @@ class VehicleParams:
         self.controller = {
             "idm": IDMControl(noise=0.1),
             "fs": FollowerStopper(),
-            "pi": PISaturation()
+            "pi": PISaturation(),
+            "rl": RLControl()
         }
-        self.agent_type = "fs"
+        self.agent_type = agent_type
         self.human_veh = "human"
         self.automated_veh = "automated"
+        self.rl_action_type = rl_action_type
 
 
 class SimulationParams:
@@ -70,7 +74,7 @@ class SimulationParams:
         self.num_clients = num_clients
         self.color_by_speed = color_by_speed
         self.use_ballistic = use_ballistic
-        self.sim_config_path = 'rlsumo/simulator/sumo_config/cfg/ring_road_20230617-1140031686982203.6779535.sumo.cfg'
+        self.sim_config_path = '/home/vamsi/Documents/GitHub/rl-sumo/rlsumo/simulator/sumo_config/cfg/ring_road_20230617-1140031686982203.6779535.sumo.cfg'
 
 
 class RLParams:

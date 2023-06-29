@@ -1,6 +1,7 @@
 from collections import OrderedDict
 
 import numpy as np
+from traci import TraCIException, FatalTraCIError
 
 from rlsumo.vehicle.controllers.controller import RLControl, IDMControl
 from rlsumo.vehicle.controllers.failsafe import Failsafe
@@ -20,16 +21,20 @@ class VehicleKernel:
         self.kernel_api = kernel_api
         self._initialize_state()
         self.kernel_api.simulationStep()
-        self.get_simulator_state()
+        return self.get_simulator_state()
 
-    def _initialize_state(self):
-
+    def clear_state(self):
+        if self.kernel_api is None:
+            return
         # unsubscribe vehicles
-        self._unsubscribe_vehicles()
-        self._remove_vehicles()
+        self.unsubscribe_vehicles()
+        self.remove_vehicles()
+
+        # Remove vehicles
         self.vehicles_dict.clear()
         self.rl_vehicles_dict.clear()
-        # Remove vehicles
+
+    def _initialize_state(self):
 
         num_env_vehicles = self.vehicle_params.env_vehicles
         num_rl_vehicles = self.vehicle_params.rl_vehicles
@@ -67,6 +72,7 @@ class VehicleKernel:
     def _distribute_rl_vehicles(self, total_num, num_rl_vehicles):
         return list(np.random.randint(0, total_num, num_rl_vehicles))
         # return [5]
+
     def _create_vehicles(self, gap_req, total_num, num_rl_vehicles):
         absolute_gap = gap_req + self.vehicle_params.length
         edge_len = self.vehicle_params.edge_len
@@ -84,7 +90,7 @@ class VehicleKernel:
             if i + 1 >= total_num:
                 leader_veh_id = "veh_id_{pos}".format(pos=0)
             else:
-                leader_veh_id = "veh_id_{pos}".format(pos=i+1)
+                leader_veh_id = "veh_id_{pos}".format(pos=i + 1)
 
             veh_id = "veh_id_{pos}".format(pos=i)
             if i in indexes:
@@ -100,7 +106,8 @@ class VehicleKernel:
                     routes=self.vehicle_params.rts,
                     lane_pos=self.vehicle_params.lane_positions,
                     failsafe=self.failsafe,
-                    leader_id=leader_veh_id
+                    leader_id=leader_veh_id,
+                    action_type=self.vehicle_params.rl_action_type
                 )
             else:
                 self.vehicles_dict[veh_id] = EnvVehicle(
@@ -115,7 +122,8 @@ class VehicleKernel:
                     routes=self.vehicle_params.rts,
                     lane_pos=self.vehicle_params.lane_positions,
                     failsafe=self.failsafe,
-                    leader_id=leader_veh_id
+                    leader_id=leader_veh_id,
+                    action_type=None
                 )
             curr_pos += absolute_gap
 
@@ -124,13 +132,19 @@ class VehicleKernel:
             self.kernel_api.vehicle.subscribe(veh_id, self.vehicle_params.vehicle_subs)
             self.kernel_api.vehicle.subscribeLeader(veh_id, 2000)
 
-    def _unsubscribe_vehicles(self):
+    def unsubscribe_vehicles(self):
         for veh_id in list(self.vehicles_dict.keys()) + list(self.rl_vehicles_dict.keys()):
-            self.kernel_api.vehicle.unsubscribe(veh_id)
+            try:
+                self.kernel_api.vehicle.unsubscribe(veh_id)
+            except (FatalTraCIError, TraCIException):
+                pass
 
-    def _remove_vehicles(self):
+    def remove_vehicles(self):
         for veh_id in list(self.vehicles_dict.keys()) + list(self.rl_vehicles_dict.keys()):
-            self.kernel_api.vehicle.remove(veh_id)
+            try:
+                self.kernel_api.vehicle.remove(veh_id)
+            except (FatalTraCIError, TraCIException):
+                pass
 
     def calculate_new_accelerations(self, rl_actions, time_step):
 
@@ -139,7 +153,7 @@ class VehicleKernel:
 
         # if time_step > 3000:
         for veh_id in self.rl_vehicles_dict.keys():
-            self.rl_vehicles_dict[veh_id].calculate_acceleration(time_step)
+            self.rl_vehicles_dict[veh_id].calculate_acceleration(rl_actions, time_step)
 
     def update_new_velocities(self, timestep):
         for veh_id in self.vehicles_dict.keys():
@@ -148,3 +162,21 @@ class VehicleKernel:
         # if timestep > 3000:
         for veh_id in self.rl_vehicles_dict.keys():
             self.rl_vehicles_dict[veh_id].update_velocity()
+
+    def get_mean_velocity(self):
+        vel = []
+        for veh_id in self.vehicles_dict.keys():
+            vel.append(self.vehicles_dict[veh_id].v)
+
+        # if timestep > 3000:
+        for veh_id in self.rl_vehicles_dict.keys():
+            vel.append(self.rl_vehicles_dict[veh_id].v)
+
+        return np.mean(vel)
+
+    def get_rl_accel(self):
+        accel = []
+        for veh_id in self.rl_vehicles_dict.keys():
+            accel.append(self.rl_vehicles_dict[veh_id].acc)
+
+        return np.mean(accel)

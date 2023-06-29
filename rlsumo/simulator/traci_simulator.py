@@ -3,6 +3,8 @@ import signal
 import subprocess
 import time
 import traceback
+
+import numpy as np
 import traci
 
 # Number of retries on restarting SUMO before giving up
@@ -26,7 +28,7 @@ class SimulationKernel:
         for _ in range(RETRIES_ON_ERROR):
             try:
                 # port number the sumo instance will be run on
-                port = self.simulation_params.port
+                port = traci.getFreeSocketPort()
 
                 sumo_binary = "sumo-gui" if self.simulation_params.render is True \
                     else "sumo"
@@ -78,8 +80,6 @@ class SimulationKernel:
                 sumo_call.append("--emissions.volumetric-fuel")
                 sumo_call.append("true")
 
-                print(sumo_call)
-
                 # Opening the I/O thread to SUMO
                 self.sumo_proc = subprocess.Popen(
                     sumo_call,
@@ -93,8 +93,9 @@ class SimulationKernel:
                 else:
                     time.sleep(SUMO_SLEEP)
 
-                traci_connection = traci.connect(port, numRetries=100)
-                traci_connection.setOrder(0)
+                traci_connection = traci.connect(port)
+                # traci_connection.setOrder(0)
+                self.traci_connection = traci_connection
                 traci_connection.simulationStep()
 
                 return traci_connection
@@ -111,14 +112,14 @@ class SimulationKernel:
     def teardown_sumo(self):
         """Kill the sumo subprocess instance."""
         try:
-            self.sumo_proc.kill()
-            os.killpg(self.sumo_proc.pid, signal.SIGTERM)
+            if self.sumo_proc is not None:
+                self.sumo_proc.kill()
+                os.killpg(self.sumo_proc.pid, signal.SIGTERM)
         except Exception as e:
             print("Error during teardown: {}".format(e))
-
 
     def close(self):
         if self.traci_connection is not None:
             self.traci_connection.close()
-        if self.sumo_proc is not None:
-            self.teardown_sumo()
+        # if self.sumo_proc is not None:
+        #     self.teardown_sumo()

@@ -134,5 +134,11 @@ class RLControl:
     def __init__(self):
         pass
 
-    def get_accel(self, rl_actions=None):
-        return rl_actions
+    def get_accel(self, vehicle, rl_actions=None):
+        if vehicle.action_type == "discrete":
+            if rl_actions == 0:
+                return 1
+            elif rl_actions == 1:
+                return -2
+        elif vehicle.action_type == "continuous":
+            return 0

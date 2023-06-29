@@ -1,18 +1,22 @@
-import gym
+import gymnasium as gym
 import numpy as np
 import traci
 
 from rlsumo.metrics.metrics import Metrics
 from rlsumo.utils.params import Params, VehicleParams, SimulationParams, RLParams
 
-params = Params(VehicleParams(), RLParams(), SimulationParams(render=True))
-
+params = Params(VehicleParams(agent_type="fs"), RLParams(), SimulationParams(render=False))
+env_config = {
+    "params": params
+}
 vmt = []
 fuel = []
+
 for i in range(1):
 
-    test = gym.make('ringroad-v0', params=params)
-    obs = test.reset()
+    test = gym.make('ringroad-v0', config=env_config)
+    obs, info = test.reset()
+
     metrics = Metrics(test)
     s = 0
 

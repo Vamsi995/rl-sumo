@@ -5,7 +5,7 @@ import traci.constants as tc
 class Vehicle:
 
     def __init__(self, veh_id, route_id, type_id, departPos, departSpeed, kernel_api, agent_type, controller, routes,
-                 lane_pos, failsafe, leader_id):
+                 lane_pos, failsafe, leader_id, action_type):
         self.veh_id = veh_id
         self.route_id = route_id
         self.type_id = type_id
@@ -16,6 +16,7 @@ class Vehicle:
         self.controller = controller
         self.failsafe = failsafe
         self.leader_id = leader_id
+        self.action_type = action_type
 
         self.v = None
         self.acc = None
@@ -77,10 +78,10 @@ class Vehicle:
 class EnvVehicle(Vehicle):
 
     def __init__(self, veh_id, route_id, type_id, departPos, departSpeed, kernel_api, agent_type, controller, routes,
-                 lane_pos, failsafe, leader_id):
+                 lane_pos, failsafe, leader_id, action_type):
         super(EnvVehicle, self).__init__(veh_id, route_id, type_id, departPos, departSpeed, kernel_api, agent_type,
                                          controller,
-                                         routes, lane_pos, failsafe, leader_id)
+                                         routes, lane_pos, failsafe, leader_id, action_type)
 
     def calculate_acceleration(self):
         self.acc = self.controller[self.agent_type].get_accel(self) + np.random.normal(0, 0.1)
@@ -89,20 +90,23 @@ class EnvVehicle(Vehicle):
 class AgentVehicle(Vehicle):
 
     def __init__(self, veh_id, route_id, type_id, departPos, departSpeed, kernel_api, agent_type, controller, routes,
-                 lane_pos, failsafe, leader_id):
+                 lane_pos, failsafe, leader_id, action_type):
         super(AgentVehicle, self).__init__(veh_id, route_id, type_id, departPos, departSpeed, kernel_api, agent_type,
                                            controller,
                                            routes,
-                                           lane_pos, failsafe, leader_id)
+                                           lane_pos, failsafe, leader_id, action_type)
 
         self.kernel_api.vehicle.setColor(self.veh_id, (255, 0, 0, 255))
 
-    def calculate_acceleration(self, time_step):
+    def calculate_acceleration(self, rl_actions, time_step):
         if time_step > 3000:
             # Todo: Desired Controller
             # self.kernel_api.vehicle.setAccel(self.veh_id, 0.5)
             # self.kernel_api.vehicle.setDecel(self.veh_id, 1.5)
-            self.acc = self.controller[self.agent_type].get_accel(self)
+            if rl_actions is not None:
+                self.acc = self.controller[self.agent_type].get_accel(self, rl_actions)
+            else:
+                self.acc = self.controller[self.agent_type].get_accel(self)
             # self.acc = self.failsafe.get_feasible_action(self.acc, self)
             # self.acc = self.failsafe.get_safe_action_instantaneous(self.acc, self)
             # self.acc = self.failsafe.get_safe_velocity_action(self.acc, self)
@@ -113,7 +117,6 @@ class AgentVehicle(Vehicle):
 
     def get_state(self):
         super().get_state()
-
-        return [self.v, self.headway]
+        return [self.v/30, self.headway/260, self.leader_speed/30]
 
 
