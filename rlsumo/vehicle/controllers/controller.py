@@ -1,4 +1,5 @@
 import numpy as np
+from charset_normalizer.md import List
 
 
 class IDMControl:
@@ -140,5 +141,10 @@ class RLControl:
                 return 1
             elif rl_actions == 1:
                 return -2
+            elif rl_actions == 2:
+                return 0
         elif vehicle.action_type == "continuous":
-            return 0
+            if isinstance(rl_actions, (np.ndarray, list)):
+                return rl_actions[0]
+            else:
+                return rl_actions

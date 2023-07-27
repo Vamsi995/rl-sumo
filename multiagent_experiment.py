@@ -7,21 +7,41 @@ from ray import tune, air
 from ray.rllib.algorithms import Algorithm
 from ray.rllib.algorithms.dqn import dqn
 from ray.rllib.algorithms.ppo import ppo
+from ray.rllib.policy.policy import PolicySpec
 from ray.rllib.utils.replay_buffers import MultiAgentPrioritizedReplayBuffer
+
+from rlsumo.envs.multiagent_ringroad import MultiAgentRingRoad
 from rlsumo.envs.ringroad import RingRoad
 
 
-class Experiment:
+class MultiAgentExperiment:
 
     def __init__(self, algorithm, time_steps, params):
-        self.env_config = None
-        self.results = None
         self.time_steps = time_steps
         self.algo = algorithm
         self.params = params
+        self.env_config = {
+            "params": params
+        }
+        self.results = None
         ray.shutdown()
         ray.init()
-        tune.register_env("ringroad_v0", lambda env_config: RingRoad(env_config))
+        tune.register_env("maringroad_v0", lambda env_config: MultiAgentRingRoad(env_config))
+
+    def define_policies(self):
+        env = MultiAgentRingRoad(self.env_config)
+        agent_ids = env.create_agent_ids()
+        policies = {}
+        for ag in agent_ids:
+            policies[ag] = PolicySpec()
+        return policies
+
+    @staticmethod
+    def policy_map_fn(agent_id: str, _episode=None, _worker=None, **_kwargs) -> str:
+        """
+        Maps agent_id to policy_id
+        """
+        return agent_id
 
     def algorithm_choice(self):
 
@@ -45,6 +65,7 @@ class Experiment:
                 double_q=True,
                 dueling=True
             )
+
         # exploration_config = {
         #     "epsilon_timesteps": 10000,
         #     "final_epsilon": 0.01
@@ -98,7 +119,11 @@ class Experiment:
             .evaluation(evaluation_interval=10, evaluation_duration=1)
             # Resources
             .resources(num_gpus=1)
-            .environment("ringroad_v0", env_config=self.env_config)
+            .environment("maringroad_v0", env_config=self.env_config)
+            .multi_agent(
+                policies=self.define_policies(),
+                policy_mapping_fn=lambda agent_id, episode, worker, **kwargs: agent_id
+            )
             # Reports
             # .reporting(min_time_s_per_iteration=5)
         )
@@ -125,22 +150,59 @@ class Experiment:
 
     def evaluate(self):
         # # Get the best result based on a particular metric.
-        best_result = self.results.get_best_result(metric="episode_reward_mean", mode="max")
+        # best_result = self.results.get_best_result(metric="episode_reward_mean", mode="max")
+        #
+        # # Get the best checkpoint corresponding to the best result.
+        # best_checkpoint = best_result.checkpoint
+        #
+        # algo = Algorithm.from_checkpoint(best_checkpoint)
+        env_config = {
+            "params": self.params
+        }
 
-        # Get the best checkpoint corresponding to the best result.
-        best_checkpoint = best_result.checkpoint
+        algorithm = (
+            self.algorithm_choice()
+            .framework("torch")
+            # Rollout
+            .rollouts(
+                batch_mode="complete_episodes",
+                num_rollout_workers=1
+            )
+            # Resources
+            .resources(num_gpus=1)
+            .environment("maringroad_v0", env_config=self.env_config)
+            .multi_agent(
+                policies=self.define_policies(),
+                policy_mapping_fn=lambda agent_id, episode, worker, **kwargs: agent_id
+            )
+            # Reports
+            # .reporting(min_time_s_per_iteration=5)
+        )
 
-        algo = Algorithm.from_checkpoint(best_checkpoint)
+        algo = algorithm.build()
+        algo.restore("/home/vamsi/ray_results/DQN/DQN_maringroad_v0_1c4ab_00000_0_2023-07-25_16-49-24/checkpoint_000001")
 
-        env = gym.make('ringroad_v0', config=self.env_config)
+        env = MultiAgentRingRoad(env_config)
         obs, info = env.reset()
-        terminated = False
-        truncated = False
+        terminated = {
+            "__all__": False
+        }
+        truncated = {
+            "__all__": False
+        }
         episode_reward = 0
-        while not terminated and not truncated:
-            # action = algo.compute_single_action(obs)
-            action = np.random.randint(2)
+
+        while not terminated["__all__"] and not truncated["__all__"]:
+            action = {}
+            for agent_id, ob in obs.items():
+                action[agent_id] = algo.compute_single_action(ob, policy_id=agent_id)
+            print(action)
             obs, reward, terminated, truncated, info = env.step(action)
-            episode_reward += reward
+            episode_reward += sum(reward.values())
+
+            print(terminated, truncated)
 
         print("Episode Reward: {rew}".format(rew=episode_reward))
+
+
+

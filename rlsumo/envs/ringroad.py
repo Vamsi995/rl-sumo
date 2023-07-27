@@ -1,15 +1,8 @@
-import os
-import sys
-
 import numpy as np
 from gymnasium import Env, spaces
-from gymnasium.wrappers import EnvCompatibility
 from rlsumo.simulator.traci_simulator import SimulationKernel
 from rlsumo.vehicle.VehicleKernel import VehicleKernel
 
-if 'SUMO_HOME' in os.environ:
- tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
- sys.path.append(tools)
 
 class RingRoad(Env):
 
@@ -19,11 +12,18 @@ class RingRoad(Env):
         self.config = config
         self.params = config["params"]
         self.done = False
-        self.action_space = spaces.Discrete(2)
-        self.observation_space = spaces.Box(low=np.array([0, -1, 0]), high=np.array([1, 1, 1]))
+
+        if self.params.vehicle_params.rl_action_type == "continuous":
+            self.action_space = spaces.Box(low=np.array([-2]), high=np.array([1]), dtype=np.float64)
+        else:
+            self.action_space = spaces.Discrete(3)
+        self.observation_space = spaces.Box(low=np.array([0.0, -1.0, 0], dtype=np.float32),
+                                            high=np.array([1.0, 1.0, 1.0], dtype=np.float32),
+                                            dtype=np.float64)
         self.simulator_kernel = SimulationKernel(self.params.simulation_params)
         self.vehicle_kernel = VehicleKernel(self.params.vehicle_params)
         self.kernel_api = None
+        self.warmup = False
 
     def reset(self, *, seed=None, options=None):
         super().reset(seed=seed)
@@ -32,18 +32,30 @@ class RingRoad(Env):
         self.done = False
         self.vehicle_kernel.clear_state()
         self.kernel_api = self.simulator_kernel.reset()
-        new_obs = self.vehicle_kernel.reset(self.kernel_api)
+        self.vehicle_kernel.reset(self.kernel_api)
+
+        # Add warmup steps
+        self.warmup_steps()
+        new_obs = self.vehicle_kernel.get_simulator_state()
+        self.time_step = 0
+        self.done = False
         return new_obs, {}
+
+    def warmup_steps(self):
+        self.warmup = True
+        for i in range(self.params.rl_params.warmup_steps):
+            self.step(None)
+        self.warmup = False
 
     def step(self, rl_actions):
 
         self.time_step += 1
 
         # Todo: Calculate Accelerations of all vehicles - env and rl
-        self.vehicle_kernel.calculate_new_accelerations(rl_actions, self.time_step)
+        self.vehicle_kernel.calculate_new_accelerations(rl_actions, self.time_step, self.warmup)
 
         # Todo: update env and rl vehicles velocity
-        self.vehicle_kernel.update_new_velocities(timestep=self.time_step)
+        self.vehicle_kernel.update_new_velocities()
 
         # Todo: update routes
         self.vehicle_kernel.update_routes()
@@ -55,15 +67,15 @@ class RingRoad(Env):
         new_obs = self.vehicle_kernel.get_simulator_state()
 
         # Todo: Check for done
-        done = self.is_done()
+        self.done = self.is_done()
 
         # Todo: Collision Detection - premature termination
         if self.check_collision():
-            return new_obs, -50, done, True, {}
+            return new_obs, -50, self.done, True, {}
 
         # Todo: Calculate reward
         rew = self.compute_rewards()
-        return new_obs, rew, done, False, {}
+        return new_obs, rew, self.done, False, {}
 
     def compute_rewards(self):
         return self.vehicle_kernel.get_mean_velocity() - abs(self.vehicle_kernel.get_rl_accel())

@@ -98,22 +98,31 @@ class AgentVehicle(Vehicle):
 
         self.kernel_api.vehicle.setColor(self.veh_id, (255, 0, 0, 255))
 
-    def calculate_acceleration(self, rl_actions, time_step):
-        if time_step > 3000:
-            # Todo: Desired Controller
-            # self.kernel_api.vehicle.setAccel(self.veh_id, 0.5)
-            # self.kernel_api.vehicle.setDecel(self.veh_id, 1.5)
+    def calculate_acceleration(self, rl_actions, time_step, warmup):
+
+        if warmup:
+            self.acc = self.controller['idm'].get_accel(self)
+        else:
             if rl_actions is not None:
                 self.acc = self.controller[self.agent_type].get_accel(self, rl_actions)
             else:
                 self.acc = self.controller[self.agent_type].get_accel(self)
-            # self.acc = self.failsafe.get_feasible_action(self.acc, self)
-            # self.acc = self.failsafe.get_safe_action_instantaneous(self.acc, self)
-            # self.acc = self.failsafe.get_safe_velocity_action(self.acc, self)
-            # self.acc = self.failsafe.get_obey_speed_limit_action(self.acc, self)
-        else:
-            # Todo: IDM Control
-            self.acc = self.controller['idm'].get_accel(self)
+
+        # if time_step > 3000:
+        #     # Todo: Desired Controller
+        #     # self.kernel_api.vehicle.setAccel(self.veh_id, 0.5)
+        #     # self.kernel_api.vehicle.setDecel(self.veh_id, 1.5)
+        #     if rl_actions is not None:
+        #         self.acc = self.controller[self.agent_type].get_accel(self, rl_actions)
+        #     else:
+        #         self.acc = self.controller[self.agent_type].get_accel(self)
+        #     # self.acc = self.failsafe.get_feasible_action(self.acc, self)
+        #     # self.acc = self.failsafe.get_safe_action_instantaneous(self.acc, self)
+        #     # self.acc = self.failsafe.get_safe_velocity_action(self.acc, self)
+        #     # self.acc = self.failsafe.get_obey_speed_limit_action(self.acc, self)
+        # else:
+        #     # Todo: IDM Control
+        #     self.acc = self.controller['idm'].get_accel(self)
 
     def get_state(self):
         super().get_state()

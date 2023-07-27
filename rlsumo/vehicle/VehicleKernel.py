@@ -17,11 +17,17 @@ class VehicleKernel:
         self.rl_vehicles_dict = OrderedDict()
         self.failsafe = Failsafe()
 
+    def ma_reset(self, kernel_api):
+        self.kernel_api = kernel_api
+        self._initialize_state()
+        self.kernel_api.simulationStep()
+        self.get_ma_simulator_state()
+
     def reset(self, kernel_api):
         self.kernel_api = kernel_api
         self._initialize_state()
         self.kernel_api.simulationStep()
-        return self.get_simulator_state()
+        self.get_simulator_state()
 
     def clear_state(self):
         if self.kernel_api is None:
@@ -51,6 +57,16 @@ class VehicleKernel:
         # Subscribe to all vehicles
         self._subscribe_vehicles()
 
+    def get_ma_simulator_state(self):
+        new_obs = {}
+        for veh_id in self.vehicles_dict.keys():
+            self.vehicles_dict[veh_id].get_state()
+
+        for veh_id in self.rl_vehicles_dict.keys():
+            new_obs[veh_id] = np.array(self.rl_vehicles_dict[veh_id].get_state())
+
+        return new_obs
+
     def get_simulator_state(self):
         new_obs = []
 
@@ -60,7 +76,7 @@ class VehicleKernel:
         for veh_id in self.rl_vehicles_dict.keys():
             new_obs.append(self.rl_vehicles_dict[veh_id].get_state())
 
-        return np.array(new_obs).flatten()
+        return np.float32(np.array(new_obs).flatten())
 
     def update_routes(self):
         for veh_id in self.vehicles_dict.keys():
@@ -80,20 +96,19 @@ class VehicleKernel:
         prev_edge_len = 0
         route_id = edge_limits[0][0]
         curr_pos = 0
+        agent_no = 0
         indexes = self._distribute_rl_vehicles(total_num, num_rl_vehicles)
+        veh_ids = []
         for i in range(total_num):
             if curr_pos > edge_limits[0][1]:
                 prev_edge_len = edge_limits[0][1]
                 edge_limits.pop(0)
                 route_id = edge_limits[0][0]
 
-            if i + 1 >= total_num:
-                leader_veh_id = "veh_id_{pos}".format(pos=0)
-            else:
-                leader_veh_id = "veh_id_{pos}".format(pos=i + 1)
-
             veh_id = "veh_id_{pos}".format(pos=i)
             if i in indexes:
+                veh_id = f"agent{agent_no}"
+                agent_no += 1
                 self.rl_vehicles_dict[veh_id] = AgentVehicle(
                     veh_id,
                     "route{route_id}_0".format(route_id=route_id),
@@ -106,7 +121,7 @@ class VehicleKernel:
                     routes=self.vehicle_params.rts,
                     lane_pos=self.vehicle_params.lane_positions,
                     failsafe=self.failsafe,
-                    leader_id=leader_veh_id,
+                    leader_id=None,
                     action_type=self.vehicle_params.rl_action_type
                 )
             else:
@@ -122,10 +137,20 @@ class VehicleKernel:
                     routes=self.vehicle_params.rts,
                     lane_pos=self.vehicle_params.lane_positions,
                     failsafe=self.failsafe,
-                    leader_id=leader_veh_id,
+                    leader_id=None,
                     action_type=None
                 )
+
+            veh_ids.append(veh_id)
             curr_pos += absolute_gap
+
+        for i in range(len(veh_ids)):
+            veh_id = veh_ids[i]
+            next_veh_id = veh_ids[0] if i + 1 >= total_num else veh_ids[i + 1]
+            if veh_id in self.vehicles_dict:
+                self.vehicles_dict[veh_id].leader_id = next_veh_id
+            else:
+                self.rl_vehicles_dict[veh_id].leader_id = next_veh_id
 
     def _subscribe_vehicles(self):
         for veh_id in list(self.vehicles_dict.keys()) + list(self.rl_vehicles_dict.keys()):
@@ -146,20 +171,27 @@ class VehicleKernel:
             except (FatalTraCIError, TraCIException):
                 pass
 
-    def calculate_new_accelerations(self, rl_actions, time_step):
+    def calculate_new_ma_accelerations(self, rl_actions, time_step, warmup):
+
+        for veh_id in self.vehicles_dict.keys():
+            self.vehicles_dict[veh_id].calculate_acceleration()
+
+        for veh_id in self.rl_vehicles_dict.keys():
+            self.rl_vehicles_dict[veh_id].calculate_acceleration(rl_actions[veh_id], time_step, warmup)
+
+    def calculate_new_accelerations(self, rl_actions, time_step, warmup):
 
         for veh_id in self.vehicles_dict.keys():
             self.vehicles_dict[veh_id].calculate_acceleration()
 
         # if time_step > 3000:
         for veh_id in self.rl_vehicles_dict.keys():
-            self.rl_vehicles_dict[veh_id].calculate_acceleration(rl_actions, time_step)
+            self.rl_vehicles_dict[veh_id].calculate_acceleration(rl_actions, time_step, warmup)
 
-    def update_new_velocities(self, timestep):
+    def update_new_velocities(self):
         for veh_id in self.vehicles_dict.keys():
             self.vehicles_dict[veh_id].update_velocity()
 
-        # if timestep > 3000:
         for veh_id in self.rl_vehicles_dict.keys():
             self.rl_vehicles_dict[veh_id].update_velocity()
 

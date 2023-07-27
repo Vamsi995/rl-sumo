@@ -79,7 +79,7 @@ class SimulationParams:
 
 class RLParams:
 
-    def __init__(self, max_episodes=3000, warmup_steps=300, discount_factor=0.99, env_horizon=6000):
+    def __init__(self, max_episodes=3000, warmup_steps=3000, discount_factor=0.99, env_horizon=3000):
         self.max_episodes = 3000
         self.warmup_steps = warmup_steps
         self.discount_factor = discount_factor
