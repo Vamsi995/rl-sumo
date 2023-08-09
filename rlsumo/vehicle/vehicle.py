@@ -87,11 +87,10 @@ class Vehicle:
 
 class EnvVehicle(Vehicle):
 
-    def __init__(self, veh_id, route_id, type_id, departPos, departSpeed, kernel_api, agent_type, controller, routes,
-                 lane_pos, failsafe, leader_id, action_type, track_len):
+    def __init__(self, veh_id, route_id, type_id, departPos, departSpeed, kernel_api, agent_type, controller, routes, failsafe, leader_id, action_type, track_len):
         super(EnvVehicle, self).__init__(veh_id, route_id, type_id, departPos, departSpeed, kernel_api, agent_type,
                                          controller,
-                                         routes, lane_pos, failsafe, leader_id, action_type, track_len)
+                                         routes, failsafe, leader_id, action_type, track_len)
 
     def calculate_acceleration(self):
         self.acc = self.controller[self.agent_type].get_accel(self) + np.random.normal(0, 0.1)
@@ -99,12 +98,10 @@ class EnvVehicle(Vehicle):
 
 class AgentVehicle(Vehicle):
 
-    def __init__(self, veh_id, route_id, type_id, departPos, departSpeed, kernel_api, agent_type, controller, routes,
-                 lane_pos, failsafe, leader_id, action_type, track_len):
+    def __init__(self, veh_id, route_id, type_id, departPos, departSpeed, kernel_api, agent_type, controller, routes, failsafe, leader_id, action_type, track_len):
         super(AgentVehicle, self).__init__(veh_id, route_id, type_id, departPos, departSpeed, kernel_api, agent_type,
                                            controller,
-                                           routes,
-                                           lane_pos, failsafe, leader_id, action_type, track_len)
+                                           routes, failsafe, leader_id, action_type, track_len)
 
         self.kernel_api.vehicle.setColor(self.veh_id, (255, 0, 0, 255))
 

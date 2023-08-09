@@ -3,12 +3,8 @@ import signal
 import subprocess
 import time
 import traceback
-
-import numpy as np
 import traci
-
 from rlsumo.simulator.network_generator.network_gen import NetworkGenerator
-from rlsumo.simulator.network_generator.ring import RingRoadNetwork
 
 # Number of retries on restarting SUMO before giving up
 RETRIES_ON_ERROR = 10

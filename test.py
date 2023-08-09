@@ -3,6 +3,7 @@ import numpy as np
 import traci
 
 from rlsumo.envs.multiagent_ringroad import MultiAgentRingRoad
+from rlsumo.envs.ringroad import RingRoad
 from rlsumo.metrics.metrics import Metrics
 from rlsumo.utils.params import Params, VehicleParams, SimulationParams, RLParams
 
@@ -17,7 +18,7 @@ fuel = []
 
 for i in range(1):
 
-    test = MultiAgentRingRoad(env_config)
+    test = RingRoad(env_config)
     obs, info = test.reset()
 
     metrics = Metrics(test)
