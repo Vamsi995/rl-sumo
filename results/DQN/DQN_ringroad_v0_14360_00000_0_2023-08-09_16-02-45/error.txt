@@ -1,0 +1,228 @@
+Failure # 1 (occurred at 2023-08-09_16-04-12)
+The actor died because of an error raised in its creation task, [36mray::DQN.__init__()[39m (pid=31655, ip=10.221.31.228, actor_id=40e6d9662ab43a36f406e65601000000, repr=DQN)
+  File "/home/vamsi/PycharmProjects/rl-sumo/lib/python3.7/site-packages/ray/rllib/evaluation/worker_set.py", line 244, in _setup
+    validate=config.validate_workers_after_construction,
+  File "/home/vamsi/PycharmProjects/rl-sumo/lib/python3.7/site-packages/ray/rllib/evaluation/worker_set.py", line 635, in add_workers
+    raise result.get()
+  File "/home/vamsi/PycharmProjects/rl-sumo/lib/python3.7/site-packages/ray/rllib/utils/actor_manager.py", line 488, in __fetch_result
+    result = ray.get(r)
+ray.exceptions.RayActorError: The actor died because of an error raised in its creation task, [36mray::RolloutWorker.__init__()[39m (pid=31721, ip=10.221.31.228, actor_id=ba03ec75adffb3ca5245864101000000, repr=<ray.rllib.evaluation.rollout_worker.RolloutWorker object at 0x7f09fc560090>)
+  File "/home/vamsi/Documents/GitHub/rl-sumo/rlsumo/envs/ringroad.py", line 34, in reset
+    self.kernel_api, track_len = self.simulator_kernel.reset()
+  File "/home/vamsi/Documents/GitHub/rl-sumo/rlsumo/simulator/traci_simulator.py", line 111, in reset
+    self.close()
+  File "/home/vamsi/Documents/GitHub/rl-sumo/rlsumo/simulator/traci_simulator.py", line 127, in close
+    self.network_gen.close()
+  File "/home/vamsi/Documents/GitHub/rl-sumo/rlsumo/simulator/network_generator/network_gen.py", line 22, in close
+    self.network.close()
+  File "/home/vamsi/Documents/GitHub/rl-sumo/rlsumo/simulator/network_generator/traci_network.py", line 568, in close
+    if self.network.net_params.template is None:
+AttributeError: 'NetParams' object has no attribute 'template'
+
+The above exception was the direct cause of the following exception:
+
+[36mray::RolloutWorker.__init__()[39m (pid=31721, ip=10.221.31.228, actor_id=ba03ec75adffb3ca5245864101000000, repr=<ray.rllib.evaluation.rollout_worker.RolloutWorker object at 0x7f09fc560090>)
+  File "/home/vamsi/PycharmProjects/rl-sumo/lib/python3.7/site-packages/ray/rllib/utils/pre_checks/env.py", line 81, in check_env
+    check_gym_environments(env)
+  File "/home/vamsi/PycharmProjects/rl-sumo/lib/python3.7/site-packages/ray/rllib/utils/pre_checks/env.py", line 188, in check_gym_environments
+    ) from e
+ValueError: Your environment (<RingRoad instance>) does not abide to the new gymnasium-style API!
+From Ray 2.3 on, RLlib only supports the new (gym>=0.26 or gymnasium) Env APIs.
+In particular, the `reset()` method seems to be faulty.
+Learn more about the most important changes here:
+https://github.com/openai/gym and here: https://github.com/Farama-Foundation/Gymnasium
+
+In order to fix this problem, do the following:
+
+1) Run `pip install gymnasium` on your command line.
+2) Change all your import statements in your code from
+   `import gym` -> `import gymnasium as gym` OR
+   `from gym.space import Discrete` -> `from gymnasium.spaces import Discrete`
+
+For your custom (single agent) gym.Env classes:
+3.1) Either wrap your old Env class via the provided `from gymnasium.wrappers import
+     EnvCompatibility` wrapper class.
+3.2) Alternatively to 3.1:
+ - Change your `reset()` method to have the call signature 'def reset(self, *,
+   seed=None, options=None)'
+ - Return an additional info dict (empty dict should be fine) from your `reset()`
+   method.
+ - Return an additional `truncated` flag from your `step()` method (between `done` and
+   `info`). This flag should indicate, whether the episode was terminated prematurely
+   due to some time constraint or other kind of horizon setting.
+
+For your custom RLlib `MultiAgentEnv` classes:
+4.1) Either wrap your old MultiAgentEnv via the provided
+     `from ray.rllib.env.wrappers.multi_agent_env_compatibility import
+     MultiAgentEnvCompatibility` wrapper class.
+4.2) Alternatively to 4.1:
+ - Change your `reset()` method to have the call signature
+   'def reset(self, *, seed=None, options=None)'
+ - Return an additional per-agent info dict (empty dict should be fine) from your
+   `reset()` method.
+ - Rename `dones` into `terminateds` and only set this to True, if the episode is really
+   done (as opposed to has been terminated prematurely due to some horizon/time-limit
+   setting).
+ - Return an additional `truncateds` per-agent dictionary flag from your `step()`
+   method, including the `__all__` key (100% analogous to your `dones/terminateds`
+   per-agent dict).
+   Return this new `truncateds` dict between `dones/terminateds` and `infos`. This
+   flag should indicate, whether the episode (for some agent or all agents) was
+   terminated prematurely due to some time constraint or other kind of horizon setting.
+
+
+During handling of the above exception, another exception occurred:
+
+[36mray::RolloutWorker.__init__()[39m (pid=31721, ip=10.221.31.228, actor_id=ba03ec75adffb3ca5245864101000000, repr=<ray.rllib.evaluation.rollout_worker.RolloutWorker object at 0x7f09fc560090>)
+  File "/home/vamsi/PycharmProjects/rl-sumo/lib/python3.7/site-packages/ray/rllib/evaluation/rollout_worker.py", line 616, in __init__
+    check_env(self.env)
+  File "/home/vamsi/PycharmProjects/rl-sumo/lib/python3.7/site-packages/ray/rllib/utils/pre_checks/env.py", line 93, in check_env
+    f"{actual_error}\n"
+ValueError: Traceback (most recent call last):
+  File "/home/vamsi/PycharmProjects/rl-sumo/lib/python3.7/site-packages/ray/rllib/utils/pre_checks/env.py", line 181, in check_gym_environments
+    obs_and_infos = env.reset(seed=None, options={})
+  File "/home/vamsi/Documents/GitHub/rl-sumo/rlsumo/envs/ringroad.py", line 34, in reset
+    self.kernel_api, track_len = self.simulator_kernel.reset()
+  File "/home/vamsi/Documents/GitHub/rl-sumo/rlsumo/simulator/traci_simulator.py", line 111, in reset
+    self.close()
+  File "/home/vamsi/Documents/GitHub/rl-sumo/rlsumo/simulator/traci_simulator.py", line 127, in close
+    self.network_gen.close()
+  File "/home/vamsi/Documents/GitHub/rl-sumo/rlsumo/simulator/network_generator/network_gen.py", line 22, in close
+    self.network.close()
+  File "/home/vamsi/Documents/GitHub/rl-sumo/rlsumo/simulator/network_generator/traci_network.py", line 568, in close
+    if self.network.net_params.template is None:
+AttributeError: 'NetParams' object has no attribute 'template'
+
+The above exception was the direct cause of the following exception:
+
+[36mray::RolloutWorker.__init__()[39m (pid=31721, ip=10.221.31.228, actor_id=ba03ec75adffb3ca5245864101000000, repr=<ray.rllib.evaluation.rollout_worker.RolloutWorker object at 0x7f09fc560090>)
+  File "/home/vamsi/PycharmProjects/rl-sumo/lib/python3.7/site-packages/ray/rllib/utils/pre_checks/env.py", line 81, in check_env
+    check_gym_environments(env)
+  File "/home/vamsi/PycharmProjects/rl-sumo/lib/python3.7/site-packages/ray/rllib/utils/pre_checks/env.py", line 188, in check_gym_environments
+    ) from e
+ValueError: Your environment (<RingRoad instance>) does not abide to the new gymnasium-style API!
+From Ray 2.3 on, RLlib only supports the new (gym>=0.26 or gymnasium) Env APIs.
+In particular, the `reset()` method seems to be faulty.
+Learn more about the most important changes here:
+https://github.com/openai/gym and here: https://github.com/Farama-Foundation/Gymnasium
+
+In order to fix this problem, do the following:
+
+1) Run `pip install gymnasium` on your command line.
+2) Change all your import statements in your code from
+   `import gym` -> `import gymnasium as gym` OR
+   `from gym.space import Discrete` -> `from gymnasium.spaces import Discrete`
+
+For your custom (single agent) gym.Env classes:
+3.1) Either wrap your old Env class via the provided `from gymnasium.wrappers import
+     EnvCompatibility` wrapper class.
+3.2) Alternatively to 3.1:
+ - Change your `reset()` method to have the call signature 'def reset(self, *,
+   seed=None, options=None)'
+ - Return an additional info dict (empty dict should be fine) from your `reset()`
+   method.
+ - Return an additional `truncated` flag from your `step()` method (between `done` and
+   `info`). This flag should indicate, whether the episode was terminated prematurely
+   due to some time constraint or other kind of horizon setting.
+
+For your custom RLlib `MultiAgentEnv` classes:
+4.1) Either wrap your old MultiAgentEnv via the provided
+     `from ray.rllib.env.wrappers.multi_agent_env_compatibility import
+     MultiAgentEnvCompatibility` wrapper class.
+4.2) Alternatively to 4.1:
+ - Change your `reset()` method to have the call signature
+   'def reset(self, *, seed=None, options=None)'
+ - Return an additional per-agent info dict (empty dict should be fine) from your
+   `reset()` method.
+ - Rename `dones` into `terminateds` and only set this to True, if the episode is really
+   done (as opposed to has been terminated prematurely due to some horizon/time-limit
+   setting).
+ - Return an additional `truncateds` per-agent dictionary flag from your `step()`
+   method, including the `__all__` key (100% analogous to your `dones/terminateds`
+   per-agent dict).
+   Return this new `truncateds` dict between `dones/terminateds` and `infos`. This
+   flag should indicate, whether the episode (for some agent or all agents) was
+   terminated prematurely due to some time constraint or other kind of horizon setting.
+
+
+The above error has been found in your environment! We've added a module for checking your custom environments. It may cause your experiment to fail if your environment is not set up correctly. You can disable this behavior via calling `config.environment(disable_env_checking=True)`. You can run the environment checking module standalone by calling ray.rllib.utils.check_env([your env]).
+
+During handling of the above exception, another exception occurred:
+
+[36mray::DQN.__init__()[39m (pid=31655, ip=10.221.31.228, actor_id=40e6d9662ab43a36f406e65601000000, repr=DQN)
+  File "/home/vamsi/PycharmProjects/rl-sumo/lib/python3.7/site-packages/ray/rllib/algorithms/algorithm.py", line 478, in __init__
+    **kwargs,
+  File "/home/vamsi/PycharmProjects/rl-sumo/lib/python3.7/site-packages/ray/tune/trainable/trainable.py", line 170, in __init__
+    self.setup(copy.deepcopy(self.config))
+  File "/home/vamsi/PycharmProjects/rl-sumo/lib/python3.7/site-packages/ray/rllib/algorithms/algorithm.py", line 608, in setup
+    logdir=self.logdir,
+  File "/home/vamsi/PycharmProjects/rl-sumo/lib/python3.7/site-packages/ray/rllib/evaluation/worker_set.py", line 194, in __init__
+    raise e.args[0].args[2]
+ValueError: Traceback (most recent call last):
+  File "/home/vamsi/PycharmProjects/rl-sumo/lib/python3.7/site-packages/ray/rllib/utils/pre_checks/env.py", line 181, in check_gym_environments
+    obs_and_infos = env.reset(seed=None, options={})
+  File "/home/vamsi/Documents/GitHub/rl-sumo/rlsumo/envs/ringroad.py", line 34, in reset
+    self.kernel_api, track_len = self.simulator_kernel.reset()
+  File "/home/vamsi/Documents/GitHub/rl-sumo/rlsumo/simulator/traci_simulator.py", line 111, in reset
+    self.close()
+  File "/home/vamsi/Documents/GitHub/rl-sumo/rlsumo/simulator/traci_simulator.py", line 127, in close
+    self.network_gen.close()
+  File "/home/vamsi/Documents/GitHub/rl-sumo/rlsumo/simulator/network_generator/network_gen.py", line 22, in close
+    self.network.close()
+  File "/home/vamsi/Documents/GitHub/rl-sumo/rlsumo/simulator/network_generator/traci_network.py", line 568, in close
+    if self.network.net_params.template is None:
+AttributeError: 'NetParams' object has no attribute 'template'
+
+The above exception was the direct cause of the following exception:
+
+[36mray::DQN.__init__()[39m (pid=31655, ip=10.221.31.228, actor_id=40e6d9662ab43a36f406e65601000000, repr=DQN)
+  File "/home/vamsi/PycharmProjects/rl-sumo/lib/python3.7/site-packages/ray/rllib/utils/pre_checks/env.py", line 81, in check_env
+    check_gym_environments(env)
+  File "/home/vamsi/PycharmProjects/rl-sumo/lib/python3.7/site-packages/ray/rllib/utils/pre_checks/env.py", line 188, in check_gym_environments
+    ) from e
+ValueError: Your environment (<RingRoad instance>) does not abide to the new gymnasium-style API!
+From Ray 2.3 on, RLlib only supports the new (gym>=0.26 or gymnasium) Env APIs.
+In particular, the `reset()` method seems to be faulty.
+Learn more about the most important changes here:
+https://github.com/openai/gym and here: https://github.com/Farama-Foundation/Gymnasium
+
+In order to fix this problem, do the following:
+
+1) Run `pip install gymnasium` on your command line.
+2) Change all your import statements in your code from
+   `import gym` -> `import gymnasium as gym` OR
+   `from gym.space import Discrete` -> `from gymnasium.spaces import Discrete`
+
+For your custom (single agent) gym.Env classes:
+3.1) Either wrap your old Env class via the provided `from gymnasium.wrappers import
+     EnvCompatibility` wrapper class.
+3.2) Alternatively to 3.1:
+ - Change your `reset()` method to have the call signature 'def reset(self, *,
+   seed=None, options=None)'
+ - Return an additional info dict (empty dict should be fine) from your `reset()`
+   method.
+ - Return an additional `truncated` flag from your `step()` method (between `done` and
+   `info`). This flag should indicate, whether the episode was terminated prematurely
+   due to some time constraint or other kind of horizon setting.
+
+For your custom RLlib `MultiAgentEnv` classes:
+4.1) Either wrap your old MultiAgentEnv via the provided
+     `from ray.rllib.env.wrappers.multi_agent_env_compatibility import
+     MultiAgentEnvCompatibility` wrapper class.
+4.2) Alternatively to 4.1:
+ - Change your `reset()` method to have the call signature
+   'def reset(self, *, seed=None, options=None)'
+ - Return an additional per-agent info dict (empty dict should be fine) from your
+   `reset()` method.
+ - Rename `dones` into `terminateds` and only set this to True, if the episode is really
+   done (as opposed to has been terminated prematurely due to some horizon/time-limit
+   setting).
+ - Return an additional `truncateds` per-agent dictionary flag from your `step()`
+   method, including the `__all__` key (100% analogous to your `dones/terminateds`
+   per-agent dict).
+   Return this new `truncateds` dict between `dones/terminateds` and `infos`. This
+   flag should indicate, whether the episode (for some agent or all agents) was
+   terminated prematurely due to some time constraint or other kind of horizon setting.
+
+
+The above error has been found in your environment! We've added a module for checking your custom environments. It may cause your experiment to fail if your environment is not set up correctly. You can disable this behavior via calling `config.environment(disable_env_checking=True)`. You can run the environment checking module standalone by calling ray.rllib.utils.check_env([your env]).

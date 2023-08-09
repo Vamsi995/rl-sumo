@@ -4,8 +4,7 @@ import traci.constants as tc
 
 class Vehicle:
 
-    def __init__(self, veh_id, route_id, type_id, departPos, departSpeed, kernel_api, agent_type, controller, routes,
-                 lane_pos, failsafe, leader_id, action_type, track_len):
+    def __init__(self, veh_id, route_id, type_id, departPos, departSpeed, kernel_api, agent_type, controller, routes, failsafe, leader_id, action_type, track_len):
         self.veh_id = veh_id
         self.route_id = route_id
         self.type_id = type_id

@@ -563,10 +563,8 @@ class TraCINetwork:
                  self.cfg_path + self.roufn,
                  self.cfg_path + self.sumfn]
 
-        if self.network != None:
 
-            if self.network.net_params.template is None:
-                files += [self.net_path + self.nodfn,
+            files += [self.net_path + self.nodfn,
                       self.net_path + self.edgfn,
                       self.net_path + self.cfgfn,
                       self.net_path + self.confn,

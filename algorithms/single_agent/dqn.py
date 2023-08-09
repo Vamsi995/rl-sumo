@@ -25,7 +25,7 @@ algorithm_config = dqn.DQNConfig().training(
         "type": "MultiAgentPrioritizedReplayBuffer",
         "capacity": 50000
     },
-    num_steps_sampled_before_learning_starts=10000,
+    num_steps_sampled_before_learning_starts=5000,
     # noisy=True,
     # sigma0=0.28,
     # double_q=True,
