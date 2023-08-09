@@ -733,13 +733,13 @@ class NetParams:
                  inflows=None,
                  osm_path=None,
                  template=None,
-                 additional_params=None):
+                 additional_params=None, length=None):
         """Instantiate NetParams."""
         self.inflows = inflows or InFlows()
         self.osm_path = osm_path
         self.template = template
         self.additional_params = additional_params or {}
-        self.length = 260
+        self.length = length
         self.lanes = 1
         self.speed_limit = 30
         self.resolution = 40

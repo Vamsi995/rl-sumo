@@ -4,7 +4,7 @@ from rlsumo.vehicle.controllers.controller import IDMControl, RLControl, Followe
 
 class VehicleParams:
 
-    def __init__(self, env_vehicles=21, rl_vehicles=1, max_velocity=30, initial_velocity=0, length=5, track_length=260,
+    def __init__(self, env_vehicles=21, rl_vehicles=1, max_velocity=30, initial_velocity=0, length=5, track_length=230,
                  rl_action_type="discrete", agent_type="idm"):
         self.env_vehicles = env_vehicles
         self.rl_vehicles = rl_vehicles
@@ -74,7 +74,16 @@ class SimulationParams:
         self.num_clients = num_clients
         self.color_by_speed = color_by_speed
         self.use_ballistic = use_ballistic
-        self.sim_config_path = '/home/vamsi/Documents/GitHub/rl-sumo/rlsumo/simulator/sumo_config/cfg/ring_road_20230617-1140031686982203.6779535.sumo.cfg'
+        self.sim_config_path = '/home/vamsi/Documents/GitHub/rl-sumo/debug/cfg/ring_road_20230809-1417341691570854.9807138.sumo.cfg'
+
+
+class NetParams:
+    def __init__(self, length=260):
+        self.length = length
+        self.lanes = 1
+        self.speed_limit = 30
+        self.resolution = 40
+        self.inflows = None
 
 
 class RLParams:

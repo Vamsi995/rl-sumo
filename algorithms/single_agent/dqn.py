@@ -16,20 +16,20 @@ algorithm_config = dqn.DQNConfig().training(
     lr=0.00001,
     gamma=0.99,
     td_error_loss_fn="huber",
-    train_batch_size=128,
+    train_batch_size=32,
     model={
         "fcnet_hiddens": [16, 16],
         "fcnet_activation": "tanh"
     },
     replay_buffer_config={
-        "type": MultiAgentPrioritizedReplayBuffer,
+        "type": "MultiAgentPrioritizedReplayBuffer",
         "capacity": 50000
     },
-    num_steps_sampled_before_learning_starts=1000,
-    noisy=True,
-    sigma0=0.28,
-    double_q=True,
-    dueling=True
+    num_steps_sampled_before_learning_starts=10000,
+    # noisy=True,
+    # sigma0=0.28,
+    # double_q=True,
+    # dueling=True
 )
 
 

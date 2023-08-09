@@ -31,8 +31,8 @@ class RingRoad(Env):
         self.time_step = 0
         self.done = False
         self.vehicle_kernel.clear_state()
-        self.kernel_api = self.simulator_kernel.reset()
-        self.vehicle_kernel.reset(self.kernel_api)
+        self.kernel_api, track_len = self.simulator_kernel.reset()
+        self.vehicle_kernel.reset(self.kernel_api, track_len)
 
         # Add warmup steps
         self.warmup_steps()
@@ -78,7 +78,7 @@ class RingRoad(Env):
         return new_obs, rew, self.done, False, {}
 
     def compute_rewards(self):
-        return self.vehicle_kernel.get_mean_velocity() - abs(self.vehicle_kernel.get_rl_accel())
+        return self.vehicle_kernel.get_mean_velocity()
 
     def is_done(self):
 

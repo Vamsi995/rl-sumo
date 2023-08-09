@@ -5,7 +5,7 @@ import traci.constants as tc
 class Vehicle:
 
     def __init__(self, veh_id, route_id, type_id, departPos, departSpeed, kernel_api, agent_type, controller, routes,
-                 lane_pos, failsafe, leader_id, action_type):
+                 lane_pos, failsafe, leader_id, action_type, track_len):
         self.veh_id = veh_id
         self.route_id = route_id
         self.type_id = type_id
@@ -17,6 +17,7 @@ class Vehicle:
         self.failsafe = failsafe
         self.leader_id = leader_id
         self.action_type = action_type
+        self.track_len = track_len
 
         self.v = None
         self.acc = None
@@ -24,14 +25,23 @@ class Vehicle:
         self.headway = None
         self.fuel_consumption = None
         self.edge_id = None
-        self.min_gap = 2.0
+        self.min_gap = 0.0
         self.leader_speed = None
         self.route = None
         self.position = None
 
         self.rts = routes
-        self.lane_pos = lane_pos
+        self.lane_pos = self.build_lane_pos()
         self.add()
+
+    def build_lane_pos(self):
+        edge_len = self.track_len / 4
+        return {
+            "bottom": 0,
+            "right": 1 * edge_len,
+            "top": 2 * edge_len,
+            "left": 3 * edge_len
+        }
 
     def add(self):
         self.kernel_api.vehicle.addFull(
@@ -63,7 +73,7 @@ class Vehicle:
         if leader_pos > self.position:
             self.headway = leader_pos - self.position - 5
         else:
-            self.headway = leader_pos + (260 - self.position) - 5
+            self.headway = leader_pos + (self.track_len - self.position) - 5
 
     def update_velocity(self):
         if self.acc is not None:
@@ -78,10 +88,10 @@ class Vehicle:
 class EnvVehicle(Vehicle):
 
     def __init__(self, veh_id, route_id, type_id, departPos, departSpeed, kernel_api, agent_type, controller, routes,
-                 lane_pos, failsafe, leader_id, action_type):
+                 lane_pos, failsafe, leader_id, action_type, track_len):
         super(EnvVehicle, self).__init__(veh_id, route_id, type_id, departPos, departSpeed, kernel_api, agent_type,
                                          controller,
-                                         routes, lane_pos, failsafe, leader_id, action_type)
+                                         routes, lane_pos, failsafe, leader_id, action_type, track_len)
 
     def calculate_acceleration(self):
         self.acc = self.controller[self.agent_type].get_accel(self) + np.random.normal(0, 0.1)
@@ -90,11 +100,11 @@ class EnvVehicle(Vehicle):
 class AgentVehicle(Vehicle):
 
     def __init__(self, veh_id, route_id, type_id, departPos, departSpeed, kernel_api, agent_type, controller, routes,
-                 lane_pos, failsafe, leader_id, action_type):
+                 lane_pos, failsafe, leader_id, action_type, track_len):
         super(AgentVehicle, self).__init__(veh_id, route_id, type_id, departPos, departSpeed, kernel_api, agent_type,
                                            controller,
                                            routes,
-                                           lane_pos, failsafe, leader_id, action_type)
+                                           lane_pos, failsafe, leader_id, action_type, track_len)
 
         self.kernel_api.vehicle.setColor(self.veh_id, (255, 0, 0, 255))
 
@@ -126,6 +136,4 @@ class AgentVehicle(Vehicle):
 
     def get_state(self):
         super().get_state()
-        return [self.v/30, self.headway/260, self.leader_speed/30]
-
-
+        return [self.v / 30, self.headway / 260, self.leader_speed / 30]

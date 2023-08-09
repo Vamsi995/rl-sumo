@@ -2,5 +2,4 @@
 <additional xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/additional_file.xsd">
     <vType id="automated" accel="1.0" decel="2.0" sigma="0.0" tau="1.0" minGap="0.0" maxSpeed="30" speedFactor="1.0" speedDev="0.1" impatience="0.5" carFollowModel="IDM" laneChangeModel="LC2013" lcStrategic="1.0" lcCooperative="1.0" lcSpeedGain="1.0" lcKeepRight="1.0" delta="4" emissionClass="HBEFA3/PC_D_EU4"/>
     <vType id="human" accel="1.0" decel="2.0" sigma="0.2" tau="1.0" minGap="0.0" maxSpeed="30" speedFactor="1.0" speedDev="0.1" impatience="0.5" carFollowModel="IDM" laneChangeModel="LC2013" lcStrategic="1.0" lcCooperative="1.0" lcSpeedGain="1.0" lcKeepRight="1.0" delta="4" emissionClass="HBEFA3/PC_D_EU4"/>
-<!--    <vType id="type1" length="5" maxSpeed="30" minGap="2.0" sigma="0.5" tau="1.0" speedFactor="1.0" speedDev="0.1" impatience="0.5" carFollowModel="IDM" emissionClass="HBEFA3/PC_G_EU4" accel="3.0" decel="3.0" />-->
 </additional>

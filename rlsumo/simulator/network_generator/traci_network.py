@@ -71,7 +71,7 @@ class TraCINetwork:
         self.netfn = '%s.net.xml' % self.network.name
         self.confn = '%s.con.xml' % self.network.name
         self.roufn = '%s.rou.xml' % self.network.name
-        self.addfn = '%s.add.xml' % "ring_road_temp"
+        self.addfn = '%s.add.xml' % self.network.name
         self.sumfn = '%s.sumo.cfg' % self.network.name
         self.guifn = '%s.gui.cfg' % self.network.name
 
@@ -377,6 +377,10 @@ class TraCINetwork:
         return net_data, connection_data
 
     def generate_cfg(self, net_params, traffic_lights, routes):
+        parser = etree.XMLParser(recover=True)
+        tree = ElementTree.parse("/home/vamsi/Documents/GitHub/rl-sumo/rlsumo/simulator/sumo_config/cfg/ring_road_20230617-1140031686982203.6779535.add.xml", parser=parser)
+        tree.write(self.cfg_path + self.addfn)
+
         # add = makexml('additional',
         #               'http://sumo.dlr.de/xsd/additional_file.xsd')
         #
@@ -552,13 +556,17 @@ class TraCINetwork:
         the case of import .net.xml files we do not want to delete them.
         """
         # Those files are being created even if self.network.net_params.template is a path to .net.xml file
-        files = [self.cfg_path + self.guifn,
+        files = []
+        if self.cfg_path != None and self.guifn != None:
+            files = [self.cfg_path + self.guifn,
                  self.cfg_path + self.addfn,
                  self.cfg_path + self.roufn,
                  self.cfg_path + self.sumfn]
 
-        if self.network.net_params.template is None:
-            files += [self.net_path + self.nodfn,
+        if self.network != None:
+
+            if self.network.net_params.template is None:
+                files += [self.net_path + self.nodfn,
                       self.net_path + self.edgfn,
                       self.net_path + self.cfgfn,
                       self.net_path + self.confn,

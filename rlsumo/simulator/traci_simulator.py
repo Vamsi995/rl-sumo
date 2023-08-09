@@ -7,6 +7,9 @@ import traceback
 import numpy as np
 import traci
 
+from rlsumo.simulator.network_generator.network_gen import NetworkGenerator
+from rlsumo.simulator.network_generator.ring import RingRoadNetwork
+
 # Number of retries on restarting SUMO before giving up
 RETRIES_ON_ERROR = 10
 SUMO_SLEEP = 1.0
@@ -18,12 +21,15 @@ class SimulationKernel:
         self.sumo_proc = None
         self.simulation_params = simulation_params
         self.traci_connection = None
+        self.network_gen = NetworkGenerator()
 
     def simulation_step(self):
         if self.traci_connection is not None:
             self.traci_connection.simulationStep()
 
     def start_simulation(self):
+
+        self.network_gen.generate_network()
         error = None
         for _ in range(RETRIES_ON_ERROR):
             try:
@@ -35,7 +41,7 @@ class SimulationKernel:
 
                 # command used to start sumo
                 sumo_call = [
-                    sumo_binary, "-c", self.simulation_params.sim_config_path,
+                    sumo_binary, "-c", self.network_gen.network.cfg,
                     "--remote-port", str(port),
                     "--step-length", str(self.simulation_params.sim_step)
                 ]
@@ -98,7 +104,7 @@ class SimulationKernel:
                 self.traci_connection = traci_connection
                 traci_connection.simulationStep()
 
-                return traci_connection
+                return traci_connection, self.network_gen.length
             except Exception as e:
                 print("Error during start: {}".format(traceback.format_exc()))
                 error = e
@@ -107,6 +113,7 @@ class SimulationKernel:
 
     def reset(self):
         self.close()
+        self.network_gen = NetworkGenerator()
         return self.start_simulation()
 
     def teardown_sumo(self):
@@ -121,5 +128,7 @@ class SimulationKernel:
     def close(self):
         if self.traci_connection is not None:
             self.traci_connection.close()
+        self.network_gen.close()
+        del self.network_gen
         # if self.sumo_proc is not None:
         #     self.teardown_sumo()

@@ -52,8 +52,8 @@ class MultiAgentRingRoad(MultiAgentEnv):
 
         self.reset_env_variables()
         self.vehicle_kernel.clear_state()
-        self.kernel_api = self.simulator_kernel.reset()
-        self.vehicle_kernel.ma_reset(kernel_api=self.kernel_api)
+        self.kernel_api, track_len = self.simulator_kernel.reset()
+        self.vehicle_kernel.ma_reset(kernel_api=self.kernel_api, track_len=track_len)
 
         self.warmup_steps()
         new_obs = self.vehicle_kernel.get_ma_simulator_state()

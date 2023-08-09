@@ -12,19 +12,22 @@ class VehicleKernel:
 
     def __init__(self, vehicle_params):
         self.vehicle_params = vehicle_params
+        self.track_length = None
         self.kernel_api = None
         self.vehicles_dict = OrderedDict()
         self.rl_vehicles_dict = OrderedDict()
         self.failsafe = Failsafe()
 
-    def ma_reset(self, kernel_api):
+    def ma_reset(self, kernel_api, track_len):
         self.kernel_api = kernel_api
+        self.track_length = track_len
         self._initialize_state()
         self.kernel_api.simulationStep()
         self.get_ma_simulator_state()
 
-    def reset(self, kernel_api):
+    def reset(self, kernel_api, track_len):
         self.kernel_api = kernel_api
+        self.track_length = track_len
         self._initialize_state()
         self.kernel_api.simulationStep()
         self.get_simulator_state()
@@ -46,7 +49,7 @@ class VehicleKernel:
         num_rl_vehicles = self.vehicle_params.rl_vehicles
         total_num = num_env_vehicles + num_rl_vehicles
 
-        track_len = self.vehicle_params.track_length
+        track_len = self.track_length
         vehicle_cover = self.vehicle_params.length * total_num
 
         rem_gap = track_len - vehicle_cover
@@ -91,7 +94,7 @@ class VehicleKernel:
 
     def _create_vehicles(self, gap_req, total_num, num_rl_vehicles):
         absolute_gap = gap_req + self.vehicle_params.length
-        edge_len = self.vehicle_params.edge_len
+        edge_len = self.track_length / 4
         edge_limits = [['bottom', edge_len], ['right', 2 * edge_len], ['top', 3 * edge_len], ['left', 4 * edge_len]]
         prev_edge_len = 0
         route_id = edge_limits[0][0]
@@ -122,7 +125,8 @@ class VehicleKernel:
                     lane_pos=self.vehicle_params.lane_positions,
                     failsafe=self.failsafe,
                     leader_id=None,
-                    action_type=self.vehicle_params.rl_action_type
+                    action_type=self.vehicle_params.rl_action_type,
+                    track_len=self.track_length
                 )
             else:
                 self.vehicles_dict[veh_id] = EnvVehicle(
@@ -138,7 +142,8 @@ class VehicleKernel:
                     lane_pos=self.vehicle_params.lane_positions,
                     failsafe=self.failsafe,
                     leader_id=None,
-                    action_type=None
+                    action_type=None,
+                    track_len=self.track_length
                 )
 
             veh_ids.append(veh_id)
