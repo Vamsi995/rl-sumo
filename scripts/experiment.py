@@ -15,11 +15,10 @@ class Experiment:
         self.time_steps = time_steps
         self.algo = algorithm
         ray.shutdown()
-        ray.init()
         tune.register_env("ringroad_v0", lambda env_config: RingRoad(env_config))
 
     def train(self):
-
+        ray.init()
         # Todo: Define algorithm
         algorithm = (
             self.algorithm_config
@@ -67,7 +66,7 @@ class Experiment:
         # best_checkpoint = best_result.checkpoint
         #
         # algo = Algorithm.from_checkpoint(best_checkpoint)
-
+        ray.init(num_cpus=1)
         env = RingRoad(self.env_config)
         obs, info = env.reset()
         terminated = False
@@ -79,3 +78,5 @@ class Experiment:
             episode_reward += reward
 
         print("Episode Reward: {rew}".format(rew=episode_reward))
+
+        ray.shutdown()
