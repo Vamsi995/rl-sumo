@@ -36,7 +36,7 @@
   "enable_tf1_exec_eagerly": false,
   "env": "ringroad_v0",
   "env_config": {
-    "params": "<rlsumo.utils.params.Params object at 0x7f5128319ad0>"
+    "params": "<rlsumo.utils.params.Params object at 0x7f895c04bc90>"
   },
   "env_task_fn": null,
   "evaluation_config": {
@@ -150,11 +150,11 @@
     "policies_to_train": null,
     "policy_map_cache": -1,
     "policy_map_capacity": 100,
-    "policy_mapping_fn": "<function AlgorithmConfig.DEFAULT_POLICY_MAPPING_FN at 0x7f5129200440>"
+    "policy_mapping_fn": "<function AlgorithmConfig.DEFAULT_POLICY_MAPPING_FN at 0x7f895e8ba3b0>"
   },
   "n_step": 1,
   "no_done_at_end": -1,
-  "noisy": true,
+  "noisy": false,
   "normalize_actions": true,
   "num_atoms": 1,
   "num_consecutive_worker_failures_tolerance": 100,
@@ -166,7 +166,7 @@
   "num_gpus_per_learner_worker": 0,
   "num_gpus_per_worker": 0,
   "num_learner_workers": 0,
-  "num_steps_sampled_before_learning_starts": 1000,
+  "num_steps_sampled_before_learning_starts": 5000,
   "num_workers": 3,
   "observation_filter": "NoFilter",
   "observation_space": null,
@@ -191,7 +191,13 @@
   "render_env": false,
   "replay_buffer_config": {
     "capacity": 50000,
-    "type": "<class 'ray.rllib.utils.replay_buffers.multi_agent_prioritized_replay_buffer.MultiAgentPrioritizedReplayBuffer'>"
+    "prioritized_replay": -1,
+    "prioritized_replay_alpha": 0.6,
+    "prioritized_replay_beta": 0.4,
+    "prioritized_replay_eps": 1e-06,
+    "replay_sequence_length": 1,
+    "type": "MultiAgentPrioritizedReplayBuffer",
+    "worker_side_prioritization": false
   },
   "replay_sequence_length": null,
   "restart_failed_sub_environments": false,
@@ -202,7 +208,7 @@
   "sampler_perf_stats_ema_coef": null,
   "seed": null,
   "shuffle_buffer_size": 0,
-  "sigma0": 0.28,
+  "sigma0": 0.5,
   "simple_optimizer": -1,
   "soft_horizon": -1,
   "store_buffer_in_checkpoints": false,
@@ -223,7 +229,7 @@
     "intra_op_parallelism_threads": 2,
     "log_device_placement": false
   },
-  "train_batch_size": 128,
+  "train_batch_size": 32,
   "training_intensity": null,
   "v_max": 10.0,
   "v_min": -10.0,

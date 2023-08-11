@@ -40,19 +40,23 @@ algorithm_config = dqn.DQNConfig().training(
 
 
 def train():
-    experiment = Experiment("DQN", 30000, env_config, algorithm_config)
+    experiment = Experiment("DQN", 10000, env_config, algorithm_config)
     experiment.train()
 
 
 def evaluate():
-    env_config["params"].simulation_params = SimulationParams(render=True)
+    # env_config["params"].simulation_params = SimulationParams(render=True)
     tune.register_env("ringroad_v0", lambda env_config: RingRoad(env_config))
     # algo = Algorithm.from_checkpoint(
     #     "/home/vamsi/ray_results/DQN_2023-07-01_15-38-25/DQN_ringroad_v0_37da4_00000_0_2023-07-01_15-38-25/checkpoint_000012")
 
     algorithm = (
         dqn.DQNConfig().training(
-            lr=0.0001
+            lr=0.0001,
+            model={
+                "fcnet_hiddens": [16, 16],
+                "fcnet_activation": "tanh"
+            },
         )
         .framework("torch")
         # Rollout
@@ -69,16 +73,8 @@ def evaluate():
     )
     algo = algorithm.build()
     algo.restore(
-        "/home/vamsi/ray_results/DQN_2023-07-01_15-38-25/DQN_ringroad_v0_37da4_00000_0_2023-07-01_15-38-25/checkpoint_000012")
-    env = RingRoad(env_config)
-    obs, info = env.reset()
-    terminated = False
-    truncated = False
-    episode_reward = 0
-    while not terminated and not truncated:
-        action = algo.compute_single_action(obs)
-        print(action)
-        obs, reward, terminated, truncated, info = env.step(action)
-        episode_reward += reward
+        "/home/vamsi/Documents/GitHub/rl-sumo/results/DQN/DQN_ringroad_v0_44ff6_00000_0_2023-08-11_10-10-59/checkpoint_000002")
 
-    print("Episode Reward: {rew}".format(rew=episode_reward))
+
+    experiment = Experiment("DQN", 10000, env_config, algorithm_config)
+    experiment.evaluate(algo)

@@ -59,23 +59,22 @@ class Experiment:
 
         ray.shutdown()
 
-    def evaluate(self):
+    def evaluate(self, algo):
         # # Get the best result based on a particular metric.
-        best_result = self.results.get_best_result(metric="episode_reward_mean", mode="max")
+        # best_result = self.results.get_best_result(metric="episode_reward_mean", mode="max")
+        #
+        # # Get the best checkpoint corresponding to the best result.
+        # best_checkpoint = best_result.checkpoint
+        #
+        # algo = Algorithm.from_checkpoint(best_checkpoint)
 
-        # Get the best checkpoint corresponding to the best result.
-        best_checkpoint = best_result.checkpoint
-
-        algo = Algorithm.from_checkpoint(best_checkpoint)
-
-        env = gym.make('ringroad_v0', config=self.env_config)
+        env = RingRoad(self.env_config)
         obs, info = env.reset()
         terminated = False
         truncated = False
         episode_reward = 0
         while not terminated and not truncated:
-            # action = algo.compute_single_action(obs)
-            action = np.random.randint(2)
+            action = algo.compute_single_action(obs)
             obs, reward, terminated, truncated, info = env.step(action)
             episode_reward += reward
 
