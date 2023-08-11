@@ -13,8 +13,6 @@ class MultiAgentExperiment:
         self.env_config = env_config
         self.algorithm_config = algorithm_config
         self.results = None
-        ray.shutdown()
-        ray.init()
         tune.register_env("maringroad_v0", lambda env_config: MultiAgentRingRoad(env_config))
 
     def define_policies(self):
@@ -33,7 +31,8 @@ class MultiAgentExperiment:
         return agent_id
 
     def train(self):
-
+        import ray
+        ray.init(ignore_reinit_error=True, num_gpus=1, num_cpus=5)
         # Todo: Define algorithm
         algorithm = (
             self.algorithm_config
@@ -83,6 +82,8 @@ class MultiAgentExperiment:
         # best_checkpoint = best_result.checkpoint
         #
         # algo = Algorithm.from_checkpoint(best_checkpoint)
+        import ray
+        ray.init(ignore_reinit_error=True, num_cpus=1, num_gpus=0)
         algorithm = (
             self.algorithm_config
             .framework("torch")

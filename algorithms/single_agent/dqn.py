@@ -1,6 +1,5 @@
 from ray import tune
 from ray.rllib.algorithms.dqn import dqn
-from ray.rllib.utils.replay_buffers import MultiAgentPrioritizedReplayBuffer
 
 from rlsumo.envs.ringroad import RingRoad
 from rlsumo.utils.params import Params, VehicleParams, SimulationParams, RLParams
@@ -71,6 +70,7 @@ def evaluate():
         # Reports
         # .reporting(min_time_s_per_iteration=5)
     )
+    print("Here")
     algo = algorithm.build()
     algo.restore(
         "/home/vamsi/Documents/GitHub/rl-sumo/results/DQN/DQN_ringroad_v0_44ff6_00000_0_2023-08-11_10-10-59/checkpoint_000002")

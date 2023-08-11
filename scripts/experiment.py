@@ -1,8 +1,4 @@
-import gymnasium as gym
-import numpy as np
-import ray
 from ray import tune, air
-from ray.rllib.algorithms import Algorithm
 from rlsumo.envs.ringroad import RingRoad
 
 
@@ -14,11 +10,11 @@ class Experiment:
         self.results = None
         self.time_steps = time_steps
         self.algo = algorithm
-        ray.shutdown()
         tune.register_env("ringroad_v0", lambda env_config: RingRoad(env_config))
 
     def train(self):
-        ray.init()
+        import ray
+        ray.init(ignore_reinit_error=True, num_cpus=5, num_gpus=1)
         # Todo: Define algorithm
         algorithm = (
             self.algorithm_config
@@ -66,7 +62,8 @@ class Experiment:
         # best_checkpoint = best_result.checkpoint
         #
         # algo = Algorithm.from_checkpoint(best_checkpoint)
-        ray.init(num_cpus=1)
+        import ray
+        ray.init(ignore_reinit_error=True, num_cpus=1, num_gpus=0)
         env = RingRoad(self.env_config)
         obs, info = env.reset()
         terminated = False
