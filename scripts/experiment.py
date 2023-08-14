@@ -71,6 +71,7 @@ class Experiment:
         episode_reward = 0
         while not terminated and not truncated:
             action = algo.compute_single_action(obs)
+            print(action)
             obs, reward, terminated, truncated, info = env.step(action)
             episode_reward += reward
 

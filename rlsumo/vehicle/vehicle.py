@@ -132,4 +132,4 @@ class AgentVehicle(Vehicle):
 
     def get_state(self):
         super().get_state()
-        return [self.v / 30, self.headway / 260, self.leader_speed / 30]
+        return [self.v / 30, self.headway / self.track_len, self.leader_speed / 30]

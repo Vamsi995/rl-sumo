@@ -1,5 +1,6 @@
 from ray import tune
 from ray.rllib.algorithms.dqn import dqn
+from ray.tune import ExperimentAnalysis
 
 from rlsumo.envs.ringroad import RingRoad
 from rlsumo.utils.params import Params, VehicleParams, SimulationParams, RLParams
@@ -12,10 +13,10 @@ env_config = {
 }
 
 algorithm_config = dqn.DQNConfig().training(
-    lr=0.00001,
+    lr=0.0001,
     gamma=0.99,
     td_error_loss_fn="huber",
-    train_batch_size=32,
+    train_batch_size=64,
     model={
         "fcnet_hiddens": [16, 16],
         "fcnet_activation": "tanh"
@@ -44,7 +45,7 @@ def train():
 
 
 def evaluate():
-    # env_config["params"].simulation_params = SimulationParams(render=True)
+    env_config["params"].simulation_params = SimulationParams(render=True)
     tune.register_env("ringroad_v0", lambda env_config: RingRoad(env_config))
     # algo = Algorithm.from_checkpoint(
     #     "/home/vamsi/ray_results/DQN_2023-07-01_15-38-25/DQN_ringroad_v0_37da4_00000_0_2023-07-01_15-38-25/checkpoint_000012")
@@ -70,11 +71,14 @@ def evaluate():
         # Reports
         # .reporting(min_time_s_per_iteration=5)
     )
-    print("Here")
+
+    analysis = ExperimentAnalysis("/home/vamsi/Documents/GitHub/rl-sumo/results/DQN")
+
+    best_checkpoint = analysis.get_best_checkpoint(analysis.trials[0], metric="episode_reward_mean", mode="max", return_path=True)
+    print(best_checkpoint)
     algo = algorithm.build()
-    algo.restore(
-        "/home/vamsi/Documents/GitHub/rl-sumo/results/DQN/DQN_ringroad_v0_44ff6_00000_0_2023-08-11_10-10-59/checkpoint_000002")
-
-
+    algo.restore(best_checkpoint)
+    #
+    #
     experiment = Experiment("DQN", 10000, env_config, algorithm_config)
     experiment.evaluate(algo)
